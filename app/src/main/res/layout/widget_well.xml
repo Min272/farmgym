@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/well_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center">
+    <ViewFlipper android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:autoStart="true" android:flipInterval="160">
+        <ImageView android:id="@+id/well0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+        <ImageView android:id="@+id/well1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+        <ImageView android:id="@+id/well2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+        <ImageView android:id="@+id/well3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+        <ImageView android:id="@+id/well4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+        <ImageView android:id="@+id/well5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+        <ImageView android:id="@+id/well6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+        <ImageView android:id="@+id/well7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+    </ViewFlipper>
+    <TextView android:id="@+id/well_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:background="@drawable/btn" android:textColor="#FFFFFF" android:textStyle="bold" android:text="Giếng" />
+</LinearLayout>
