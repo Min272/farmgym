@@ -29,16 +29,16 @@ object Store {
     fun toReal(c: Context, gameTime: Long) =
         System.currentTimeMillis() + maxOf(0L, gameTime - now(c)) / speed(c)
 
-    private fun spots(a: JSONArray) = MutableList(a.length() / 2) {
-        Spot(a.getDouble(it * 2).toFloat(), a.getDouble(it * 2 + 1).toFloat())
+    private fun spots(a: JSONArray) = MutableList(a.length() / 3) {
+        Spot(a.getDouble(it * 3).toFloat(), a.getDouble(it * 3 + 1).toFloat(), a.getInt(it * 3 + 2))
     }
 
     private fun json(list: List<Spot>) = JSONArray().also { a ->
-        list.forEach { a.put(it.x.toDouble()).put(it.y.toDouble()) }
+        list.forEach { a.put(it.x.toDouble()).put(it.y.toDouble()).put(it.kind) }
     }
 
     fun load(c: Context): Farm {
-        val s = prefs(c).getString("save2", null)
+        val s = prefs(c).getString("save3", null)
         if (s == null) {
             // Lần đầu: lưu ngay để vị trí gà không đổi giữa các lần đọc
             return Farm.new(now(c)).also { it.timeScale = speed(c); save(c, it) }
@@ -50,7 +50,7 @@ object Store {
             Chicken(
                 k.getInt("id"), k.getLong("t"), k.getLong("fed"), k.getLong("prog"), k.getLong("eat"),
                 k.getDouble("ax").toFloat(), k.getDouble("ay").toFloat(), k.getLong("at"),
-                k.getDouble("fx").toFloat(), k.getDouble("fy").toFloat()
+                k.getDouble("fx").toFloat(), k.getDouble("fy").toFloat(), k.getInt("gk")
             )
         }
         return Farm(
@@ -65,13 +65,13 @@ object Store {
         for (k in f.chickens) chickens.put(
             JSONObject().put("id", k.id).put("t", k.t).put("fed", k.fed).put("prog", k.prog)
                 .put("eat", k.eatStart).put("ax", k.ax.toDouble()).put("ay", k.ay.toDouble())
-                .put("at", k.at).put("fx", k.fx.toDouble()).put("fy", k.fy.toDouble())
+                .put("at", k.at).put("fx", k.fx.toDouble()).put("fy", k.fy.toDouble()).put("gk", k.gk)
         )
         val o = JSONObject()
             .put("coins", f.coins).put("water", f.water).put("refillAt", f.refillAt)
             .put("stock", f.stock).put("truckAt", f.truckAt).put("truckMoney", f.truckMoney)
             .put("grass", json(f.grass)).put("eggs", json(f.eggs)).put("chickens", chickens)
-        prefs(c).edit().putString("save2", o.toString()).apply()
+        prefs(c).edit().putString("save3", o.toString()).apply()
     }
 
     /** Đọc -> cập nhật -> thao tác -> lưu -> vẽ lại widget. */

@@ -20,21 +20,24 @@ import kotlin.math.roundToInt
 class FarmView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     var farm: Farm? = null
     var onEggTap: (Spot) -> Unit = {}
+    var onWellTap: () -> Unit = {}
+    var onTruckTap: () -> Unit = {}
 
     private val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
     private val rect = RectF()
     private fun bmp(id: Int): Bitmap = BitmapFactory.decodeResource(resources, id)
-    private val bg = bmp(R.drawable.bg_pasture)
-    private val tuft = bmp(R.drawable.grass_tuft)
+    private val maps = Sprites.MAPS.map { bmp(it) }
+    private val tufts = Sprites.GRASS.map { bmp(it) }
     private val egg = bmp(R.drawable.egg)
     private val idle = bmp(R.drawable.chicken_idle)
     private val eat = Sprites.EAT.map { bmp(it) }
     private val walk = Sprites.WALK.map { dir -> dir.map { bmp(it) } }
+    private val wellFull = bmp(R.drawable.well_full)
+    private val wellEmpty = bmp(R.drawable.well_empty)
+    private val pump = Sprites.PUMP.map { bmp(it) }
+    private val truck = bmp(R.drawable.truck)
 
-    private val chickenSize get() = width * 0.17f
-    // Chừa lề để gà và trứng không bị cắt
-    private fun px(x: Float) = chickenSize / 2 + x * (width - chickenSize)
-    private fun py(y: Float) = chickenSize / 2 + y * (height - chickenSize)
+    private fun scene() = Scene(width.toFloat(), height.toFloat())
 
     private fun draw(c: Canvas, b: Bitmap, x: Float, y: Float, size: Float, flip: Boolean = false) {
         rect.set(x - size / 2, y - size / 2, x + size / 2, y + size / 2)
@@ -43,29 +46,53 @@ class FarmView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
         if (flip) c.restore()
     }
 
+    private fun draw(c: Canvas, b: Bitmap, box: Box) = draw(c, b, box.x, box.y, box.size)
+
+    private fun label(c: Canvas, text: String, box: Box) {
+        paint.textSize = 13 * resources.displayMetrics.scaledDensity
+        paint.textAlign = Paint.Align.CENTER
+        paint.color = 0xFFFFFFFF.toInt()
+        paint.setShadowLayer(5f, 0f, 0f, 0xFF000000.toInt())
+        c.drawText(text, box.x, box.y + box.size / 2, paint)
+        paint.clearShadowLayer()
+        paint.color = 0xFF000000.toInt()
+    }
+
     override fun onDraw(canvas: Canvas) {
         val f = farm ?: return
+        if (width == 0 || height == 0) return
         val now = Store.now(context)
         f.advance(now)
+        val scene = scene()
         rect.set(0f, 0f, width.toFloat(), height.toFloat())
-        canvas.drawBitmap(bg, null as Rect?, rect, paint)
+        canvas.drawBitmap(maps[scene.variant], null as Rect?, rect, paint)
 
-        val s = chickenSize
-        val foot = s * 0.3f
-        for (g in f.grass) draw(canvas, tuft, px(g.x), py(g.y) + foot, s * 0.6f)
-        // Đám cỏ đang bị ăn: nhỏ và mờ dần
-        for (c in f.chickens) if (c.eating) {
-            val left = 1f - ((now - c.eatStart).toFloat() / Rules.EAT_TIME).coerceIn(0f, 1f)
-            paint.alpha = (60 + 195 * left).toInt()
-            draw(canvas, tuft, px(c.ax) - s * 0.2f, py(c.ay) + foot, s * 0.6f * (0.3f + 0.7f * left))
-            paint.alpha = 255
+        // Cỏ nguyên và cỏ đang bị ăn (thưa dần), vẽ từ xa tới gần
+        val grass = f.grass.map { it to it.kind } + f.chickens.filter { it.eating }.map {
+            val left = 1f - ((now - it.eatStart).toFloat() / Rules.EAT_TIME).coerceIn(0f, 1f)
+            Spot(it.ax, it.ay) to f.grassFrame(it.gk, left)
         }
-        for (e in f.eggs) draw(canvas, egg, px(e.x), py(e.y) + foot, s * 0.32f)
+        for ((g, frame) in grass.sortedBy { it.first.y }) {
+            draw(canvas, tufts[frame], scene.sx(g.x), scene.sy(g.y) + scene.foot, scene.tuftSize)
+        }
+        for (e in f.eggs) draw(canvas, egg, scene.egg(e))
 
+        val tickWell = SystemClock.uptimeMillis()
+        val wellImage = when {
+            f.refillAt != 0L -> pump[((tickWell / 160) % pump.size).toInt()]
+            f.water > 0 -> wellFull
+            else -> wellEmpty
+        }
+        draw(canvas, wellImage, scene.well)
+        label(canvas, if (f.refillAt != 0L) "⏳ ${clock(context, f.refillAt)}" else "💧 ${f.water}/${Rules.WELL_MAX}", scene.well)
+        if (f.truckAt == 0L) draw(canvas, truck, scene.truck)
+        label(canvas, if (f.truckAt != 0L) "🚚 ${clock(context, f.truckAt)}" else "🥚 ${f.stock}", scene.truck)
+
+        val s = scene.chicken
         val tick = SystemClock.uptimeMillis()
         for ((c, p) in f.chickens.map { it to f.pose(it, now) }.sortedBy { it.second.y }) {
-            val x = px(p.x)
-            val y = py(p.y)
+            val x = scene.sx(p.x)
+            val y = scene.sy(p.y)
             when (p.act) {
                 Act.EAT -> draw(canvas, eat[((tick / 120 + c.id) % eat.size).toInt()], x, y, s)
                 Act.STAND -> draw(canvas, idle, x, y, s, p.dx > 0)
@@ -91,9 +118,16 @@ class FarmView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action == MotionEvent.ACTION_DOWN) {
             val f = farm ?: return true
-            val foot = chickenSize * 0.3f
-            val hit = f.eggs.minByOrNull { hypot(px(it.x) - event.x, py(it.y) + foot - event.y) }
-            if (hit != null && hypot(px(hit.x) - event.x, py(hit.y) + foot - event.y) < chickenSize * 0.4f) onEggTap(hit)
+            val scene = scene()
+            when {
+                scene.well.contains(event.x, event.y) -> onWellTap()
+                scene.truck.contains(event.x, event.y) -> onTruckTap()
+                else -> {
+                    fun dist(e: Spot) = scene.egg(e).let { hypot(it.x - event.x, it.y - event.y) }
+                    val hit = f.eggs.minByOrNull { dist(it) }
+                    if (hit != null && dist(hit) < scene.chicken * 0.4f) onEggTap(hit)
+                }
+            }
         }
         return true
     }

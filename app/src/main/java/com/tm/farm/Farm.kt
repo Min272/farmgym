@@ -1,7 +1,11 @@
 package com.tm.farm
 
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /** Logic thuần Kotlin. Thời gian: mili-giây "giờ game". Toạ độ bản đồ: 0..1. */
 object Rules {
@@ -14,7 +18,9 @@ object Rules {
     const val TRUCK_TIME = 60 * MIN
 
     const val WELL_MAX = 5
-    const val GRASS_PER_WATER = 6
+    const val GRASS_PER_WATER = 6      // trung bình; mỗi lần tưới mọc 5..7 đám
+    const val GRASS_KIND_MIN = 8       // 8..15 là các dáng cỏ lớn (13..15 có hoa)
+    const val GRASS_KIND_MAX = 15
     const val GRASS_MAX = 24
     const val NEST_MAX = 12
     const val CHICKEN_MAX = 6
@@ -30,7 +36,27 @@ object Rules {
     const val RUN_SPEED = 0.2           // tốc độ chạy tới cỏ (bản đồ/giây)
 }
 
-data class Spot(val x: Float, val y: Float)
+data class Spot(val x: Float, val y: Float, val kind: Int = 0)
+
+/** Vùng đất cho gà, cỏ, trứng: hình elip (lồi nên đi thẳng giữa 2 điểm không ra ngoài, không đụng giếng và xe). */
+object Field {
+    const val CX = 0.50f
+    const val CY = 0.565f
+    const val RX = 0.31f
+    const val RY = 0.235f
+
+    fun at(a: Float, b: Float): Spot {
+        val r = sqrt(a)
+        val t = b * 2 * PI.toFloat()
+        return Spot(CX + RX * r * cos(t), CY + RY * r * sin(t))
+    }
+
+    /** Kéo điểm ở ngoài về mép vùng đất. */
+    fun clamp(x: Float, y: Float): Spot {
+        val d = hypot((x - CX) / RX, (y - CY) / RY)
+        return if (d <= 1f) Spot(x, y) else Spot(CX + (x - CX) / d * 0.999f, CY + (y - CY) / d * 0.999f)
+    }
+}
 
 data class Chicken(
     val id: Int,
@@ -42,7 +68,8 @@ data class Chicken(
     var ay: Float,
     var at: Long,
     var fx: Float = 0f,           // vị trí xuất phát khi chạy tới cỏ
-    var fy: Float = 0f
+    var fy: Float = 0f,
+    var gk: Int = 12              // dáng đám cỏ đang ăn
 ) {
     val eating get() = eatStart != 0L
     val hungry get() = !eating && fed == 0L
@@ -81,8 +108,8 @@ data class Farm(
 
     private fun addChicken(now: Long) {
         val id = chickens.size
-        chickens.add(Chicken(id, now, ax = 0.3f + 0.4f * noise(now, id.toLong()),
-            ay = 0.3f + 0.4f * noise(now, id + 99L), at = now))
+        val s = Field.at(noise(now, id.toLong()), noise(now, id + 99L))
+        chickens.add(Chicken(id, now, ax = s.x, ay = s.y, at = now))
     }
 
     private fun sec(ms: Long) = ms / 1000.0 / timeScale
@@ -103,7 +130,7 @@ data class Farm(
         val n = el.toLong()
         val part = el - n
         val seed = c.at * 31 + c.id
-        fun way(i: Long) = if (i == 0L) Spot(c.ax, c.ay) else Spot(noise(seed, i * 2), noise(seed, i * 2 + 1))
+        fun way(i: Long) = if (i == 0L) Spot(c.ax, c.ay) else Field.at(noise(seed, i * 2), noise(seed, i * 2 + 1))
         val a = way(n)
         val b = way(n + 1)
         val k = minOf(1.0, part / Rules.MOVE_PART).toFloat()
@@ -165,7 +192,7 @@ data class Farm(
             if (hypot(grass[i].x - p.x, grass[i].y - p.y) < hypot(grass[best].x - p.x, grass[best].y - p.y)) best = i
         }
         val g = grass.removeAt(best)
-        c.fx = p.x; c.fy = p.y; c.ax = g.x; c.ay = g.y
+        c.fx = p.x; c.fy = p.y; c.ax = g.x; c.ay = g.y; c.gk = g.kind
         c.eatStart = time; c.t = time
     }
 
@@ -173,33 +200,76 @@ data class Farm(
 
     fun canWater() = water > 0 && grass.size < Rules.GRASS_MAX
 
-    /** Mọc một vùng cỏ ở chỗ ngẫu nhiên. */
-    fun waterGrass(now: Long): Boolean {
+    /** Mọc một vùng cỏ quanh center (null = chỗ ngẫu nhiên). Mỗi lần khác số đám, độ rộng và dáng. */
+    fun waterGrass(now: Long, center: Spot? = null): Boolean {
         advance(now)
         if (!canWater()) return false
         water--
-        val cx = 0.15f + 0.7f * noise(now, 1)
-        val cy = 0.15f + 0.7f * noise(now, 2)
+        val mid = center ?: Field.at(noise(now, 1), noise(now, 2))
+        val count = Rules.GRASS_PER_WATER - 1 + (noise(now, 3) * 3).toInt()
+        val spread = 0.14f + 0.14f * noise(now, 4)
+        val kinds = Rules.GRASS_KIND_MAX - Rules.GRASS_KIND_MIN + 1
         var i = 0L
         var added = 0
-        while (added < Rules.GRASS_PER_WATER && grass.size < Rules.GRASS_MAX) {
+        while (added < count && grass.size < Rules.GRASS_MAX) {
             val dx = noise(now, 10 + i) - 0.5f
             val dy = noise(now, 500 + i) - 0.5f
+            val kind = Rules.GRASS_KIND_MIN + (noise(now, 900 + i) * kinds).toInt().coerceAtMost(kinds - 1)
             i++
-            val s = Spot((cx + dx * 0.3f).coerceIn(0f, 1f), (cy + dy * 0.3f).coerceIn(0f, 1f))
-            if (i < 60 && grass.any { abs(it.x - s.x) < 0.05f && abs(it.y - s.y) < 0.06f }) continue
-            grass.add(s); added++
+            val p = Field.clamp(mid.x + dx * spread, mid.y + dy * spread)
+            if (i < 60 && grass.any { abs(it.x - p.x) < 0.035f && abs(it.y - p.y) < 0.045f }) continue
+            grass.add(p.copy(kind = kind)); added++
         }
         feedHungry(now)
         return true
     }
 
+    /** Hình cỏ khi bị ăn: left từ 1 (nguyên) về 0, cỏ thưa dần qua các giai đoạn. */
+    fun grassFrame(kind: Int, left: Float) =
+        if (left > 0.85f) kind else (left / 0.85f * 8).toInt().coerceIn(0, 7)
+
+    fun canRefill() = water < Rules.WELL_MAX && refillAt == 0L
+
     fun refill(now: Long): Boolean {
         advance(now)
-        if (water > 0 || refillAt != 0L) return false
+        if (!canRefill()) return false
         coins -= minOf(coins, Rules.REFILL_COST)
         refillAt = now + Rules.REFILL_TIME
         return true
+    }
+
+    /** Thiếu cỏ: số đám cỏ còn trống ít hơn số gà. */
+    fun lackGrass() = grass.size < chickens.size
+
+    /** Chạm một ô trên bãi: có trứng trong ô thì nhặt, không thì tưới quanh ô nếu thiếu cỏ. */
+    fun tapCell(now: Long, scene: Scene, cell: Int): String {
+        advance(now)
+        val here = scene.eggsInCell(cell, eggs)
+        if (here.isNotEmpty()) {
+            settle(now)
+            var n = 0
+            for (e in here) if (eggs.remove(e)) { stock++; n++ }
+            afterPickup(now)
+            return "Đã nhặt $n trứng"
+        }
+        if (!lackGrass()) return "Cỏ còn đủ"
+        if (waterGrass(now, scene.cellCenter(cell))) return "Đã tưới cỏ (giếng còn $water)"
+        return "Hết nước, hãy chạm vào giếng"
+    }
+
+    /** Chạm xe tải: bán trứng trong kho. */
+    fun tapTruck(now: Long): String {
+        advance(now)
+        if (truckAt != 0L) return "Xe đang đi bán"
+        val n = stock
+        return if (sell(now)) "Xe chở $n trứng đi bán" else "Kho chưa có trứng"
+    }
+
+    /** Chạm widget giếng: bơm đầy. */
+    fun tapWell(now: Long): String {
+        advance(now)
+        if (refillAt != 0L) return "Giếng đang bơm"
+        return if (refill(now)) "Bắt đầu bơm đầy giếng" else "Giếng đang đầy"
     }
 
     /** Đưa tiến trình các gà không ăn tới now (gọi sau advance). */

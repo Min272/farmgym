@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/map" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/map_square" android:scaleType="fitXY" />
+    <ImageView android:id="@+id/grass0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass8" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass9" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass10" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass11" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass12" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass13" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass14" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass15" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass16" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass17" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass18" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass19" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass20" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass21" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass22" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass23" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass24" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass25" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass26" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass27" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass28" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/grass29" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/grass_12" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg8" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg9" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg10" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ImageView android:id="@+id/egg11" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/egg" android:visibility="invisible" />
+    <ViewFlipper android:id="@+id/slot0" android:layout_width="match_parent" android:layout_height="match_parent" android:autoStart="true" android:flipInterval="300" android:visibility="invisible">
+        <ImageView android:id="@+id/f0_0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f0_1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f0_2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f0_3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f0_4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f0_5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f0_6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f0_7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+    </ViewFlipper>
+    <ViewFlipper android:id="@+id/slot1" android:layout_width="match_parent" android:layout_height="match_parent" android:autoStart="true" android:flipInterval="300" android:visibility="invisible">
+        <ImageView android:id="@+id/f1_0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f1_1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f1_2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f1_3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f1_4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f1_5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f1_6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f1_7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+    </ViewFlipper>
+    <ViewFlipper android:id="@+id/slot2" android:layout_width="match_parent" android:layout_height="match_parent" android:autoStart="true" android:flipInterval="300" android:visibility="invisible">
+        <ImageView android:id="@+id/f2_0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f2_1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f2_2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f2_3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f2_4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f2_5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f2_6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f2_7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+    </ViewFlipper>
+    <ViewFlipper android:id="@+id/slot3" android:layout_width="match_parent" android:layout_height="match_parent" android:autoStart="true" android:flipInterval="300" android:visibility="invisible">
+        <ImageView android:id="@+id/f3_0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f3_1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f3_2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f3_3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f3_4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f3_5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f3_6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f3_7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+    </ViewFlipper>
+    <ViewFlipper android:id="@+id/slot4" android:layout_width="match_parent" android:layout_height="match_parent" android:autoStart="true" android:flipInterval="300" android:visibility="invisible">
+        <ImageView android:id="@+id/f4_0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f4_1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f4_2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f4_3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f4_4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f4_5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f4_6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f4_7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+    </ViewFlipper>
+    <ViewFlipper android:id="@+id/slot5" android:layout_width="match_parent" android:layout_height="match_parent" android:autoStart="true" android:flipInterval="300" android:visibility="invisible">
+        <ImageView android:id="@+id/f5_0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f5_1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f5_2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f5_3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f5_4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f5_5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f5_6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+        <ImageView android:id="@+id/f5_7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/chicken_idle" />
+    </ViewFlipper>
+    <TextView android:id="@+id/info" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="12sp" android:shadowColor="#000000" android:shadowRadius="4" android:layout_gravity="top|center_horizontal" android:padding="6dp" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <FrameLayout android:id="@+id/cell0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <FrameLayout android:id="@+id/cell4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <FrameLayout android:id="@+id/cell8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell10" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+            <FrameLayout android:id="@+id/cell11" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" />
+        </LinearLayout>
+    </LinearLayout>
+    <FrameLayout android:id="@+id/well_box" android:layout_width="match_parent" android:layout_height="match_parent">
+        <FrameLayout android:id="@+id/well_hit" android:layout_width="match_parent" android:layout_height="match_parent">
+            <ViewFlipper android:layout_width="match_parent" android:layout_height="match_parent" android:autoStart="true" android:flipInterval="160">
+                <ImageView android:id="@+id/well0" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+                <ImageView android:id="@+id/well1" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+                <ImageView android:id="@+id/well2" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+                <ImageView android:id="@+id/well3" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+                <ImageView android:id="@+id/well4" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+                <ImageView android:id="@+id/well5" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+                <ImageView android:id="@+id/well6" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+                <ImageView android:id="@+id/well7" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/well_full" />
+            </ViewFlipper>
+            <TextView android:id="@+id/well_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="12sp" android:shadowColor="#000000" android:shadowRadius="4" android:layout_gravity="bottom|center_horizontal" />
+        </FrameLayout>
+    </FrameLayout>
+    <FrameLayout android:id="@+id/truck_box" android:layout_width="match_parent" android:layout_height="match_parent">
+        <FrameLayout android:id="@+id/truck_hit" android:layout_width="match_parent" android:layout_height="match_parent">
+            <ImageView android:id="@+id/truck_img" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/truck" />
+            <TextView android:id="@+id/truck_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="12sp" android:shadowColor="#000000" android:shadowRadius="4" android:layout_gravity="bottom|center_horizontal" />
+        </FrameLayout>
+    </FrameLayout>
+    <FrameLayout android:id="@+id/gear_box" android:layout_width="match_parent" android:layout_height="match_parent">
+        <TextView android:id="@+id/gear_hit" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="⚙" android:textColor="#FFFFFF" android:textSize="20sp" android:shadowColor="#000000" android:shadowRadius="4" />
+    </FrameLayout>
+</FrameLayout>

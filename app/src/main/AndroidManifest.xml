@@ -8,13 +8,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".PastureWidget" android:exported="false" android:label="Đồng cỏ">
+        <receiver android:name=".FarmWidget" android:exported="false" android:label="Nông trại">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/pasture_info" />
-        </receiver>
-        <receiver android:name=".WellWidget" android:exported="false" android:label="Giếng">
-            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/well_info" />
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/farm_info" />
         </receiver>
         <receiver android:name=".ActionReceiver" android:exported="false" />
     </application>
