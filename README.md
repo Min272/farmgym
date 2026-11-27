@@ -25,14 +25,15 @@ Nhấn giữ màn hình chính → Widget → Nông Trại → kéo **Nông tr�
 |---|---|
 | Giếng | bơm đầy (30 phút, 5 xu) |
 | Xe tải | chở trứng trong kho đi bán (1 giờ) |
-| Ô có trứng | nhặt trứng trong ô đó (và trứng nằm sát mép ô) |
-| Ô không có trứng | tưới quanh ô đó, nếu cỏ trống ít hơn số gà |
+| Ô trên bãi | nhặt trứng trong ô đó (và trứng nằm sát mép ô) |
 | ⚙ góc trên phải | mở app |
 
 ## Cách chơi
-Mỗi lần tưới mọc 5-7 đám cỏ, độ rộng và dáng khác nhau (có đám ra hoa).
-Gà đói chạy tới đám gần nhất ăn 5 phút, cỏ thưa dần. No 60 phút rồi đói.
-Đủ 120 phút **không đói** thì đẻ 1 trứng ngay dưới chân.
+- Giếng có nước thì **tự tưới** 10 phút một lần, mỗi lần 5-7 đám cỏ. Tối đa 200 đám.
+- Gà đói chạy tới đám gần nhất ăn 5 phút, cỏ thưa dần. No 60 phút rồi đói.
+- Đủ 120 phút không đói thì đẻ 1 trứng ngay dưới chân.
+- Gà đói liên tục **12 giờ** thì chết. Trứng để quá **10 giờ** thì biến mất.
+- Chết hết gà vẫn mua lại được dù thiếu tiền.
 Widget chỉ mô phỏng: gà đi qua lại quanh vị trí tính ở lần cập nhật gần nhất.
 
 Nút **Debug** trong app tua x1 / x60 / x600 để test.

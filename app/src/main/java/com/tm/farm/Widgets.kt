@@ -8,6 +8,12 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -16,6 +22,7 @@ import android.widget.Toast
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.sqrt
 
 const val ACT_CELL = "com.tm.farm.CELL"
 const val ACT_WELL = "com.tm.farm.WELL"
@@ -58,7 +65,6 @@ object Widgets {
         intArrayOf(R.id.f4_0, R.id.f4_1, R.id.f4_2, R.id.f4_3, R.id.f4_4, R.id.f4_5, R.id.f4_6, R.id.f4_7),
         intArrayOf(R.id.f5_0, R.id.f5_1, R.id.f5_2, R.id.f5_3, R.id.f5_4, R.id.f5_5, R.id.f5_6, R.id.f5_7),
     )
-    private val GRASS = intArrayOf(R.id.grass0, R.id.grass1, R.id.grass2, R.id.grass3, R.id.grass4, R.id.grass5, R.id.grass6, R.id.grass7, R.id.grass8, R.id.grass9, R.id.grass10, R.id.grass11, R.id.grass12, R.id.grass13, R.id.grass14, R.id.grass15, R.id.grass16, R.id.grass17, R.id.grass18, R.id.grass19, R.id.grass20, R.id.grass21, R.id.grass22, R.id.grass23, R.id.grass24, R.id.grass25, R.id.grass26, R.id.grass27, R.id.grass28, R.id.grass29)
     private val EGGS = intArrayOf(R.id.egg0, R.id.egg1, R.id.egg2, R.id.egg3, R.id.egg4, R.id.egg5, R.id.egg6, R.id.egg7, R.id.egg8, R.id.egg9, R.id.egg10, R.id.egg11)
     private val WELL = intArrayOf(R.id.well0, R.id.well1, R.id.well2, R.id.well3, R.id.well4, R.id.well5, R.id.well6, R.id.well7)
     private val CELLS = intArrayOf(R.id.cell0, R.id.cell1, R.id.cell2, R.id.cell3, R.id.cell4, R.id.cell5, R.id.cell6, R.id.cell7, R.id.cell8, R.id.cell9, R.id.cell10, R.id.cell11)
@@ -97,6 +103,30 @@ object Widgets {
         v.setViewPadding(id, l, t, maxOf(0, w - l - size), maxOf(0, h - t - size))
     }
 
+    private const val LAYER_PIXELS = 180_000f   // giữ ảnh dưới khoảng 720 KB
+
+    /** Vẽ tất cả đám cỏ vào một ảnh, thay vì mỗi đám một view. */
+    private fun grassLayer(
+        c: Context, scene: Scene, tufts: List<Triple<Float, Float, Int>>, w: Int, h: Int
+    ): Bitmap {
+        val k = minOf(1f, sqrt(LAYER_PIXELS / (w.toFloat() * h)))
+        val out = Bitmap.createBitmap(maxOf(1, (w * k).toInt()), maxOf(1, (h * k).toInt()), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(out)
+        canvas.scale(out.width / w.toFloat(), out.height / h.toFloat())
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG)
+        val images = HashMap<Int, Bitmap>()
+        val rect = RectF()
+        for ((x, y, frame) in tufts) {
+            val img = images.getOrPut(frame) { BitmapFactory.decodeResource(c.resources, Sprites.GRASS[frame]) }
+            val cx = scene.sx(x)
+            val cy = scene.sy(y) + scene.foot
+            val half = scene.tuftSize / 2
+            rect.set(cx - half, cy - half, cx + half, cy + half)
+            canvas.drawBitmap(img, null as Rect?, rect, paint)
+        }
+        return out
+    }
+
     private fun build(c: Context, f: Farm, now: Long, widget: Int, options: Bundle): RemoteViews {
         val v = RemoteViews(c.packageName, R.layout.widget_farm)
         // Kích thước ước lượng theo tuỳ chọn của launcher (màn hình dọc)
@@ -113,14 +143,7 @@ object Widgets {
             val left = 1f - ((now - it.eatStart).toFloat() / Rules.EAT_TIME).coerceIn(0f, 1f)
             Triple(it.ax, it.ay, f.grassFrame(it.gk, left))
         }
-        val sorted = tufts.sortedBy { it.second }
-        for (i in GRASS.indices) {
-            val g = sorted.getOrNull(i)
-            v.setViewVisibility(GRASS[i], if (g == null) View.INVISIBLE else View.VISIBLE)
-            if (g == null) continue
-            v.setImageViewResource(GRASS[i], Sprites.GRASS[g.third])
-            place(v, GRASS[i], Box(scene.sx(g.first), scene.sy(g.second) + scene.foot, scene.tuftSize), w, h)
-        }
+        v.setImageViewBitmap(R.id.grass_layer, grassLayer(c, scene, tufts.sortedBy { it.second }, w, h))
         for (i in EGGS.indices) {
             val e = f.eggs.getOrNull(i)
             v.setViewVisibility(EGGS[i], if (e == null) View.INVISIBLE else View.VISIBLE)
@@ -173,7 +196,9 @@ object Widgets {
         v.setOnClickPendingIntent(R.id.gear_hit, openApp(c))
 
         val hungry = f.chickens.count { it.hungry }
-        v.setTextViewText(R.id.info, "💰 ${f.coins}" + if (hungry > 0) "  ❗$hungry" else "")
+        val info = "💰 ${f.coins}  🌱 ${f.grass.size}" + (if (hungry > 0) "  ❗$hungry" else "") +
+            if (f.chickens.isEmpty()) "  ☠ Hết gà" else ""
+        v.setTextViewText(R.id.info, info)
 
         for (cell in CELLS.indices) v.setOnClickPendingIntent(CELLS[cell], cellAction(c, widget, cell, w, h))
         return v

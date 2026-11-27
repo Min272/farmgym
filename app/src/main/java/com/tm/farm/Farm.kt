@@ -21,7 +21,10 @@ object Rules {
     const val GRASS_PER_WATER = 6      // trung bình; mỗi lần tưới mọc 5..7 đám
     const val GRASS_KIND_MIN = 8       // 8..15 là các dáng cỏ lớn (13..15 có hoa)
     const val GRASS_KIND_MAX = 15
-    const val GRASS_MAX = 24
+    const val GRASS_MAX = 200
+    const val AUTO_WATER_GAP = 10 * MIN // giếng có nước: cứ 10 phút tự tưới 1 lần
+    const val EGG_LIFE = 600 * MIN      // trứng để quá 10 giờ sẽ biến mất
+    const val STARVE_TIME = 720 * MIN   // đói liên tục 12 giờ thì gà chết
     const val NEST_MAX = 12
     const val CHICKEN_MAX = 6
 
@@ -36,7 +39,8 @@ object Rules {
     const val RUN_SPEED = 0.2           // tốc độ chạy tới cỏ (bản đồ/giây)
 }
 
-data class Spot(val x: Float, val y: Float, val kind: Int = 0)
+/** kind: dáng cỏ. born: lúc trứng được đẻ. */
+data class Spot(val x: Float, val y: Float, val kind: Int = 0, val born: Long = 0)
 
 /** Vùng đất cho gà, cỏ, trứng: hình elip (lồi nên đi thẳng giữa 2 điểm không ra ngoài, không đụng giếng và xe). */
 object Field {
@@ -69,7 +73,8 @@ data class Chicken(
     var at: Long,
     var fx: Float = 0f,           // vị trí xuất phát khi chạy tới cỏ
     var fy: Float = 0f,
-    var gk: Int = 12              // dáng đám cỏ đang ăn
+    var gk: Int = 12,             // dáng đám cỏ đang ăn
+    var hungrySince: Long = 0     // 0 = không đói
 ) {
     val eating get() = eatStart != 0L
     val hungry get() = !eating && fed == 0L
@@ -97,19 +102,22 @@ data class Farm(
     var truckMoney: Int = 0,
     val grass: MutableList<Spot> = mutableListOf(),
     val eggs: MutableList<Spot> = mutableListOf(),
-    val chickens: MutableList<Chicken> = mutableListOf()
+    val chickens: MutableList<Chicken> = mutableListOf(),
+    var nextWaterAt: Long = 0,    // mốc sớm nhất được tự tưới tiếp
+    var deaths: Int = 0,
+    var spoiled: Int = 0
 ) {
     /** Tốc độ tua (debug). Dùng để đổi giờ game sang giây thật khi tính vị trí. */
     var timeScale = 1
 
     companion object {
-        fun new(now: Long) = Farm().also { f -> repeat(2) { f.addChicken(now) } }
+        fun new(now: Long) = Farm(nextWaterAt = now).also { f -> repeat(2) { f.addChicken(now) } }
     }
 
     private fun addChicken(now: Long) {
-        val id = chickens.size
+        val id = (chickens.maxOfOrNull { it.id } ?: -1) + 1
         val s = Field.at(noise(now, id.toLong()), noise(now, id + 99L))
-        chickens.add(Chicken(id, now, ax = s.x, ay = s.y, at = now))
+        chickens.add(Chicken(id, now, ax = s.x, ay = s.y, at = now, hungrySince = now))
     }
 
     private fun sec(ms: Long) = ms / 1000.0 / timeScale
@@ -148,39 +156,72 @@ data class Farm(
 
     private fun canLay(c: Chicken) = eggs.size < Rules.NEST_MAX && Rules.LAY_TIME - c.prog <= c.fed
 
-    private fun nextOf(c: Chicken): Long? = when {
+    private fun nextOf(c: Chicken): Long = when {
         c.eating -> c.eatStart + Rules.EAT_TIME
-        c.fed == 0L -> null
+        c.fed == 0L -> c.hungrySince + Rules.STARVE_TIME
         canLay(c) -> c.t + (Rules.LAY_TIME - c.prog)
         else -> c.t + c.fed
     }
 
+    private fun waterTime(): Long? = if (canWater()) nextWaterAt else null
+
+    private fun spoilTime(): Long? = eggs.minOfOrNull { it.born + Rules.EGG_LIFE }
+
     /** Tính mọi thứ đã xảy ra tới now, theo đúng thứ tự thời gian (offline progress). */
     fun advance(now: Long) {
-        if (refillAt != 0L && now >= refillAt) { water = Rules.WELL_MAX; refillAt = 0 }
         if (truckAt != 0L && now >= truckAt) { coins += truckMoney; truckMoney = 0; truckAt = 0 }
         while (true) {
-            var best: Chicken? = null
-            var bestT = Long.MAX_VALUE
+            var bird: Chicken? = null
+            var birdT = Long.MAX_VALUE
             for (c in chickens) {
-                val e = nextOf(c) ?: continue
-                if (e <= now && e < bestT) { best = c; bestT = e }
+                val e = nextOf(c)
+                if (e < birdT) { bird = c; birdT = e }
             }
-            val c = best ?: break
-            if (c.eating) {                       // ăn xong -> no đầy, đi lang thang từ chỗ cỏ
-                c.eatStart = 0; c.fed = Rules.FED_TIME; c.t = bestT; c.at = bestT
-            } else if (canLay(c)) {               // đẻ ngay dưới chân
-                val p = pose(c, bestT)
-                eggs.add(Spot(p.x, p.y))
-                c.fed -= Rules.LAY_TIME - c.prog
-                c.prog = 0; c.t = bestT
-                if (c.fed == 0L) tryEat(c, bestT)
-            } else {                              // đói
-                c.prog = minOf(Rules.LAY_TIME, c.prog + c.fed)
-                c.fed = 0; c.t = bestT
-                tryEat(c, bestT)
+            val refillT = if (refillAt != 0L) refillAt else Long.MAX_VALUE
+            val waterT = waterTime() ?: Long.MAX_VALUE
+            val spoilT = spoilTime() ?: Long.MAX_VALUE
+            val t = minOf(birdT, refillT, waterT, spoilT)
+            if (t > now) break
+            // Sự kiện của gà luôn xử lý trước khi trùng giờ, để settle() không bỏ sót lúc gà bắt đầu đói
+            when (t) {
+                birdT -> step(bird!!, t)
+                refillT -> { water = Rules.WELL_MAX; refillAt = 0; nextWaterAt = maxOf(nextWaterAt, t) }
+                spoilT -> {                       // trứng hỏng -> bãi có chỗ trống từ lúc này
+                    settle(t)
+                    val before = eggs.size
+                    eggs.removeAll { it.born + Rules.EGG_LIFE <= t }
+                    spoiled += before - eggs.size
+                }
+                else -> {
+                    sprinkle(t)
+                    nextWaterAt = t + Rules.AUTO_WATER_GAP
+                }
             }
         }
+    }
+
+    private fun step(c: Chicken, time: Long) {
+        if (c.eating) {                           // ăn xong -> no đầy, đi lang thang từ chỗ cỏ
+            c.eatStart = 0; c.fed = Rules.FED_TIME; c.t = time; c.at = time
+        } else if (c.fed == 0L) {                 // đói quá lâu -> chết
+            chickens.remove(c)
+            deaths++
+        } else if (canLay(c)) {                   // đẻ ngay dưới chân
+            val p = pose(c, time)
+            eggs.add(Spot(p.x, p.y, born = time))
+            c.fed -= Rules.LAY_TIME - c.prog
+            c.prog = 0; c.t = time
+            if (c.fed == 0L) getHungry(c, time)
+        } else {
+            c.prog = minOf(Rules.LAY_TIME, c.prog + c.fed)
+            c.fed = 0; c.t = time
+            getHungry(c, time)
+        }
+    }
+
+    private fun getHungry(c: Chicken, time: Long) {
+        c.hungrySince = time
+        tryEat(c, time)
     }
 
     /** Gà đói chạy tới đám cỏ gần nhất. Đám cỏ đó được "giữ chỗ" cho con gà này. */
@@ -191,7 +232,9 @@ data class Farm(
         for (i in 1 until grass.size) {
             if (hypot(grass[i].x - p.x, grass[i].y - p.y) < hypot(grass[best].x - p.x, grass[best].y - p.y)) best = i
         }
+        if (grass.size >= Rules.GRASS_MAX) nextWaterAt = maxOf(nextWaterAt, time)  // bãi vừa hết đầy
         val g = grass.removeAt(best)
+        c.hungrySince = 0
         c.fx = p.x; c.fy = p.y; c.ax = g.x; c.ay = g.y; c.gk = g.kind
         c.eatStart = time; c.t = time
     }
@@ -200,12 +243,10 @@ data class Farm(
 
     fun canWater() = water > 0 && grass.size < Rules.GRASS_MAX
 
-    /** Mọc một vùng cỏ quanh center (null = chỗ ngẫu nhiên). Mỗi lần khác số đám, độ rộng và dáng. */
-    fun waterGrass(now: Long, center: Spot? = null): Boolean {
-        advance(now)
-        if (!canWater()) return false
+    /** Tự tưới: mọc một vùng cỏ ở chỗ ngẫu nhiên. Mỗi lần khác số đám, độ rộng và dáng. */
+    private fun sprinkle(now: Long) {
         water--
-        val mid = center ?: Field.at(noise(now, 1), noise(now, 2))
+        val mid = Field.at(noise(now, 1), noise(now, 2))
         val count = Rules.GRASS_PER_WATER - 1 + (noise(now, 3) * 3).toInt()
         val spread = 0.14f + 0.14f * noise(now, 4)
         val kinds = Rules.GRASS_KIND_MAX - Rules.GRASS_KIND_MIN + 1
@@ -221,7 +262,6 @@ data class Farm(
             grass.add(p.copy(kind = kind)); added++
         }
         feedHungry(now)
-        return true
     }
 
     /** Hình cỏ khi bị ăn: left từ 1 (nguyên) về 0, cỏ thưa dần qua các giai đoạn. */
@@ -238,23 +278,16 @@ data class Farm(
         return true
     }
 
-    /** Thiếu cỏ: số đám cỏ còn trống ít hơn số gà. */
-    fun lackGrass() = grass.size < chickens.size
-
-    /** Chạm một ô trên bãi: có trứng trong ô thì nhặt, không thì tưới quanh ô nếu thiếu cỏ. */
+    /** Chạm một ô trên bãi: nhặt trứng trong ô. Việc tưới đã tự động. */
     fun tapCell(now: Long, scene: Scene, cell: Int): String {
         advance(now)
         val here = scene.eggsInCell(cell, eggs)
-        if (here.isNotEmpty()) {
-            settle(now)
-            var n = 0
-            for (e in here) if (eggs.remove(e)) { stock++; n++ }
-            afterPickup(now)
-            return "Đã nhặt $n trứng"
-        }
-        if (!lackGrass()) return "Cỏ còn đủ"
-        if (waterGrass(now, scene.cellCenter(cell))) return "Đã tưới cỏ (giếng còn $water)"
-        return "Hết nước, hãy chạm vào giếng"
+        if (here.isEmpty()) return "Ô này không có trứng"
+        settle(now)
+        var n = 0
+        for (e in here) if (eggs.remove(e)) { stock++; n++ }
+        afterPickup(now)
+        return "Đã nhặt $n trứng"
     }
 
     /** Chạm xe tải: bán trứng trong kho. */
@@ -317,10 +350,13 @@ data class Farm(
         return true
     }
 
+    /** Chết hết gà thì được mua dù thiếu tiền, để không kẹt game. */
+    fun canBuy() = chickens.size < Rules.CHICKEN_MAX && (coins >= Rules.CHICKEN_COST || chickens.isEmpty())
+
     fun buyChicken(now: Long): Boolean {
         advance(now)
-        if (coins < Rules.CHICKEN_COST || chickens.size >= Rules.CHICKEN_MAX) return false
-        coins -= Rules.CHICKEN_COST
+        if (!canBuy()) return false
+        coins -= minOf(coins, Rules.CHICKEN_COST)
         addChicken(now)
         tryEat(chickens.last(), now)
         return true
@@ -328,9 +364,9 @@ data class Farm(
 
     /** Mốc gần nhất widget cần vẽ lại. */
     fun nextEventAt(now: Long): Long? {
-        val list = mutableListOf(refillAt, truckAt)
+        val list = mutableListOf(refillAt, truckAt, waterTime() ?: 0L, spoilTime() ?: 0L)
         for (c in chickens) {
-            nextOf(c)?.let { list.add(it) }
+            list.add(nextOf(c))
             if (c.eating) list.add(c.eatStart + Rules.EAT_TIME / 2)
         }
         return list.filter { it > now }.minOrNull()

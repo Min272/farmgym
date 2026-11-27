@@ -44,20 +44,29 @@ object Store {
             return Farm.new(now(c)).also { it.timeScale = speed(c); save(c, it) }
         }
         val o = JSONObject(s)
+        val now = now(c)
+        val born = o.optJSONArray("eggBorn")   // bản lưu cũ không có -> tính từ bây giờ
         val a = o.getJSONArray("chickens")
         val chickens = MutableList(a.length()) {
             val k = a.getJSONObject(it)
             Chicken(
                 k.getInt("id"), k.getLong("t"), k.getLong("fed"), k.getLong("prog"), k.getLong("eat"),
                 k.getDouble("ax").toFloat(), k.getDouble("ay").toFloat(), k.getLong("at"),
-                k.getDouble("fx").toFloat(), k.getDouble("fy").toFloat(), k.getInt("gk")
-            )
+                k.getDouble("fx").toFloat(), k.getDouble("fy").toFloat(), k.getInt("gk"),
+                k.optLong("hungry", 0L)
+            ).also { if (it.hungry && it.hungrySince == 0L) it.hungrySince = now }
         }
+        val eggs = spots(o.getJSONArray("eggs"))
+        for (i in eggs.indices) eggs[i] = eggs[i].copy(born = born?.getLong(i) ?: now)
         return Farm(
             o.getInt("coins"), o.getInt("water"), o.getLong("refillAt"), o.getInt("stock"),
             o.getLong("truckAt"), o.getInt("truckMoney"),
-            spots(o.getJSONArray("grass")), spots(o.getJSONArray("eggs")), chickens
-        ).also { it.timeScale = speed(c) }
+            spots(o.getJSONArray("grass")), eggs, chickens,
+            o.optLong("nextWater", now), o.optInt("deaths"), o.optInt("spoiled")
+        ).also {
+            it.timeScale = speed(c)
+            if (born == null) save(c, it)      // chốt mốc giờ khi nâng cấp bản lưu cũ
+        }
     }
 
     fun save(c: Context, f: Farm) {
@@ -66,11 +75,14 @@ object Store {
             JSONObject().put("id", k.id).put("t", k.t).put("fed", k.fed).put("prog", k.prog)
                 .put("eat", k.eatStart).put("ax", k.ax.toDouble()).put("ay", k.ay.toDouble())
                 .put("at", k.at).put("fx", k.fx.toDouble()).put("fy", k.fy.toDouble()).put("gk", k.gk)
+                .put("hungry", k.hungrySince)
         )
         val o = JSONObject()
             .put("coins", f.coins).put("water", f.water).put("refillAt", f.refillAt)
             .put("stock", f.stock).put("truckAt", f.truckAt).put("truckMoney", f.truckMoney)
             .put("grass", json(f.grass)).put("eggs", json(f.eggs)).put("chickens", chickens)
+            .put("eggBorn", JSONArray(f.eggs.map { it.born }))
+            .put("nextWater", f.nextWaterAt).put("deaths", f.deaths).put("spoiled", f.spoiled)
         prefs(c).edit().putString("save3", o.toString()).apply()
     }
 

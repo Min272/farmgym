@@ -24,7 +24,6 @@ class MainActivity : Activity() {
         farmView().onEggTap = { egg -> apply { f, now -> f.collectOne(now, egg) } }
         farmView().onWellTap = { apply { f, now -> toast(f.tapWell(now)) } }
         farmView().onTruckTap = { apply { f, now -> toast(f.tapTruck(now)) } }
-        bind(R.id.water) { f, now -> f.waterGrass(now) }
         bind(R.id.refill) { f, now -> f.refill(now) }
         bind(R.id.collect) { f, now -> f.collect(now) }
         bind(R.id.sell) { f, now -> f.sell(now) }
@@ -82,12 +81,12 @@ class MainActivity : Activity() {
         findViewById<TextView>(R.id.status).text =
             "💰 ${f.coins}   🐔 ${f.chickens.size} (đói ${f.chickens.count { it.hungry }})   🌱 ${f.grass.size}\n" +
             "💧 ${f.water}/${Rules.WELL_MAX}   🥚 bãi ${f.eggs.size}/${Rules.NEST_MAX}, kho ${f.stock}\n" +
+            "☠ gà chết ${f.deaths}   🗑 trứng hỏng ${f.spoiled}\n" +
             extra.joinToString("   ")
-        button(R.id.water).isEnabled = f.canWater()
         button(R.id.refill).isEnabled = f.canRefill()
         button(R.id.collect).isEnabled = f.eggs.isNotEmpty()
         button(R.id.sell).isEnabled = f.stock > 0 && f.truckAt == 0L
-        button(R.id.buy).isEnabled = f.coins >= Rules.CHICKEN_COST && f.chickens.size < Rules.CHICKEN_MAX
+        button(R.id.buy).isEnabled = f.canBuy()
         button(R.id.speed).text = "Debug: tua x${Store.speed(this)}"
     }
 }
