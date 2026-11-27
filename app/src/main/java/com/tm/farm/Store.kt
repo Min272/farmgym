@@ -29,24 +29,49 @@ object Store {
     fun toReal(c: Context, gameTime: Long) =
         System.currentTimeMillis() + maxOf(0L, gameTime - now(c)) / speed(c)
 
+    private fun spots(a: JSONArray) = MutableList(a.length() / 2) {
+        Spot(a.getDouble(it * 2).toFloat(), a.getDouble(it * 2 + 1).toFloat())
+    }
+
+    private fun json(list: List<Spot>) = JSONArray().also { a ->
+        list.forEach { a.put(it.x.toDouble()).put(it.y.toDouble()) }
+    }
+
     fun load(c: Context): Farm {
-        val s = prefs(c).getString("save", null) ?: return Farm()
+        val s = prefs(c).getString("save2", null)
+        if (s == null) {
+            // Lần đầu: lưu ngay để vị trí gà không đổi giữa các lần đọc
+            return Farm.new(now(c)).also { it.timeScale = speed(c); save(c, it) }
+        }
         val o = JSONObject(s)
         val a = o.getJSONArray("chickens")
+        val chickens = MutableList(a.length()) {
+            val k = a.getJSONObject(it)
+            Chicken(
+                k.getInt("id"), k.getLong("t"), k.getLong("fed"), k.getLong("prog"), k.getLong("eat"),
+                k.getDouble("ax").toFloat(), k.getDouble("ay").toFloat(), k.getLong("at"),
+                k.getDouble("fx").toFloat(), k.getDouble("fy").toFloat()
+            )
+        }
         return Farm(
-            o.getInt("coins"), o.getInt("water"), o.getLong("refillAt"), o.getInt("grass"),
-            o.getInt("eggs"), o.getInt("stock"), o.getLong("truckAt"), o.getInt("truckMoney"),
-            MutableList(a.length()) { a.getLong(it) }
-        )
+            o.getInt("coins"), o.getInt("water"), o.getLong("refillAt"), o.getInt("stock"),
+            o.getLong("truckAt"), o.getInt("truckMoney"),
+            spots(o.getJSONArray("grass")), spots(o.getJSONArray("eggs")), chickens
+        ).also { it.timeScale = speed(c) }
     }
 
     fun save(c: Context, f: Farm) {
+        val chickens = JSONArray()
+        for (k in f.chickens) chickens.put(
+            JSONObject().put("id", k.id).put("t", k.t).put("fed", k.fed).put("prog", k.prog)
+                .put("eat", k.eatStart).put("ax", k.ax.toDouble()).put("ay", k.ay.toDouble())
+                .put("at", k.at).put("fx", k.fx.toDouble()).put("fy", k.fy.toDouble())
+        )
         val o = JSONObject()
             .put("coins", f.coins).put("water", f.water).put("refillAt", f.refillAt)
-            .put("grass", f.grass).put("eggs", f.eggsOnGround).put("stock", f.stock)
-            .put("truckAt", f.truckAt).put("truckMoney", f.truckMoney)
-            .put("chickens", JSONArray(f.chickens))
-        prefs(c).edit().putString("save", o.toString()).apply()
+            .put("stock", f.stock).put("truckAt", f.truckAt).put("truckMoney", f.truckMoney)
+            .put("grass", json(f.grass)).put("eggs", json(f.eggs)).put("chickens", chickens)
+        prefs(c).edit().putString("save2", o.toString()).apply()
     }
 
     /** Đọc -> cập nhật -> thao tác -> lưu -> vẽ lại widget. */

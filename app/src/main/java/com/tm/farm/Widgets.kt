@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
 import java.text.SimpleDateFormat
@@ -21,6 +22,7 @@ const val ACT_TICK = "com.tm.farm.TICK"
 
 class PastureWidget : AppWidgetProvider() {
     override fun onUpdate(c: Context, m: AppWidgetManager, ids: IntArray) { Store.update(c) }
+    override fun onAppWidgetOptionsChanged(c: Context, m: AppWidgetManager, id: Int, options: Bundle) { Store.update(c) }
 }
 
 class WellWidget : AppWidgetProvider() {
@@ -53,15 +55,15 @@ object Widgets {
         intArrayOf(R.id.f4_0, R.id.f4_1, R.id.f4_2, R.id.f4_3, R.id.f4_4, R.id.f4_5, R.id.f4_6, R.id.f4_7),
         intArrayOf(R.id.f5_0, R.id.f5_1, R.id.f5_2, R.id.f5_3, R.id.f5_4, R.id.f5_5, R.id.f5_6, R.id.f5_7),
     )
+    private val GRASS = intArrayOf(R.id.grass0, R.id.grass1, R.id.grass2, R.id.grass3, R.id.grass4, R.id.grass5, R.id.grass6, R.id.grass7, R.id.grass8, R.id.grass9, R.id.grass10, R.id.grass11, R.id.grass12, R.id.grass13, R.id.grass14, R.id.grass15, R.id.grass16, R.id.grass17, R.id.grass18, R.id.grass19, R.id.grass20, R.id.grass21, R.id.grass22, R.id.grass23, R.id.grass24, R.id.grass25, R.id.grass26, R.id.grass27, R.id.grass28, R.id.grass29)
     private val EGGS = intArrayOf(R.id.egg0, R.id.egg1, R.id.egg2, R.id.egg3, R.id.egg4, R.id.egg5, R.id.egg6, R.id.egg7, R.id.egg8, R.id.egg9, R.id.egg10, R.id.egg11)
     private val WELL = intArrayOf(R.id.well0, R.id.well1, R.id.well2, R.id.well3, R.id.well4, R.id.well5, R.id.well6, R.id.well7)
-    private val EAT = intArrayOf(R.drawable.chicken_eat0, R.drawable.chicken_eat1, R.drawable.chicken_eat2, R.drawable.chicken_eat3, R.drawable.chicken_eat4, R.drawable.chicken_eat5, R.drawable.chicken_eat6, R.drawable.chicken_eat7)
-    private val HUNGRY = intArrayOf(R.drawable.chicken_hungry0, R.drawable.chicken_hungry1, R.drawable.chicken_hungry2, R.drawable.chicken_hungry3, R.drawable.chicken_hungry4, R.drawable.chicken_hungry5, R.drawable.chicken_hungry6, R.drawable.chicken_hungry7)
-    private val PUMP = intArrayOf(R.drawable.well_pump0, R.drawable.well_pump1, R.drawable.well_pump2, R.drawable.well_pump3, R.drawable.well_pump4, R.drawable.well_pump5, R.drawable.well_pump6, R.drawable.well_pump7)
 
     fun render(c: Context, f: Farm, now: Long) {
         val m = AppWidgetManager.getInstance(c)
-        m.updateAppWidget(ComponentName(c, PastureWidget::class.java), pasture(c, f, now))
+        for (id in m.getAppWidgetIds(ComponentName(c, PastureWidget::class.java))) {
+            m.updateAppWidget(id, pasture(c, f, now, m.getAppWidgetOptions(id)))
+        }
         m.updateAppWidget(ComponentName(c, WellWidget::class.java), well(c, f))
         schedule(c, f, now)
     }
@@ -76,28 +78,65 @@ object Widgets {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    private fun pasture(c: Context, f: Farm, now: Long): RemoteViews {
+    /** Đặt ảnh vuông cạnh size (px) tại tâm (x, y) bằng cách chỉnh padding. */
+    private fun place(v: RemoteViews, id: Int, x: Float, y: Float, size: Float, w: Int, h: Int) {
+        val l = (x - size / 2).toInt().coerceIn(0, maxOf(0, w - size.toInt()))
+        val t = (y - size / 2).toInt().coerceIn(0, maxOf(0, h - size.toInt()))
+        v.setViewPadding(id, l, t, maxOf(0, w - l - size.toInt()), maxOf(0, h - t - size.toInt()))
+    }
+
+    private fun pasture(c: Context, f: Farm, now: Long, options: Bundle): RemoteViews {
         val v = RemoteViews(c.packageName, R.layout.widget_pasture)
-        for (i in SLOTS.indices) {
-            val t = f.chickens.getOrNull(i)
-            v.setViewVisibility(SLOTS[i], if (t == null) View.INVISIBLE else View.VISIBLE)
-            if (t == null) continue
-            val eating = t != 0L && now < t - Rules.LAY_TIME + Rules.EAT_TIME
-            for (j in 0 until 8) {
-                val img = when {
-                    t == 0L -> HUNGRY[j]
-                    eating -> EAT[j]
-                    else -> R.drawable.chicken_idle
-                }
-                v.setImageViewResource(FRAMES[i][j], img)
-            }
+        // Kích thước vùng cỏ ước lượng theo kích thước widget (dọc màn hình)
+        val density = c.resources.displayMetrics.density
+        val wDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH).takeIf { it > 0 } ?: 250
+        val hDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).takeIf { it > 0 } ?: 220
+        val w = (wDp * density).toInt()
+        val h = (maxOf(80, hDp - 46) * density).toInt()
+        val s = minOf(w * 0.2f, h * 0.35f)
+        fun px(x: Float) = s / 2 + x * (w - s)
+        fun py(y: Float) = s / 2 + y * (h - s)
+
+        // Cỏ còn nguyên + cỏ đang bị ăn (mờ dần)
+        val tufts = f.grass.map { Triple(it.x, it.y, 255) } + f.chickens.filter { it.eating }.map {
+            val left = 1f - ((now - it.eatStart).toFloat() / Rules.EAT_TIME).coerceIn(0f, 1f)
+            Triple(it.ax, it.ay, (60 + 195 * left).toInt())
+        }
+        for (i in GRASS.indices) {
+            val g = tufts.getOrNull(i)
+            v.setViewVisibility(GRASS[i], if (g == null) View.INVISIBLE else View.VISIBLE)
+            if (g == null) continue
+            place(v, GRASS[i], px(g.first), py(g.second) + s * 0.3f, s * 0.6f, w, h)
+            v.setInt(GRASS[i], "setImageAlpha", g.third)
         }
         for (i in EGGS.indices) {
-            v.setViewVisibility(EGGS[i], if (i < f.eggsOnGround) View.VISIBLE else View.INVISIBLE)
+            val e = f.eggs.getOrNull(i)
+            v.setViewVisibility(EGGS[i], if (e == null) View.INVISIBLE else View.VISIBLE)
+            if (e != null) place(v, EGGS[i], px(e.x), py(e.y) + s * 0.3f, s * 0.32f, w, h)
         }
-        v.setViewVisibility(R.id.grass_img, if (f.grass > 0) View.VISIBLE else View.INVISIBLE)
-        v.setTextViewText(R.id.info, "🌱 ${f.grass}   🥚 ${f.eggsOnGround}/${Rules.NEST_MAX}")
-        v.setTextViewText(R.id.btn_collect, "Nhặt 🥚 ${f.eggsOnGround}")
+        for (i in SLOTS.indices) {
+            val k = f.chickens.getOrNull(i)
+            v.setViewVisibility(SLOTS[i], if (k == null) View.INVISIBLE else View.VISIBLE)
+            if (k == null) continue
+            // Đang ăn: đứng tại đám cỏ. Còn lại: đi qua lại quanh vị trí hiện tại.
+            val p = f.pose(k, now)
+            val x = px(if (k.eating) k.ax else p.x)
+            val y = py(if (k.eating) k.ay else p.y)
+            for (j in 0 until 8) {
+                val goingLeft = j < 4
+                val step = if (goingLeft) j else 7 - j
+                val offset = if (k.eating) 0f else (1.5f - step) * s * 0.22f
+                val img = when {
+                    k.eating -> Sprites.EAT[j]
+                    goingLeft -> if (k.hungry) Sprites.HUNGRY[j] else Sprites.WALK[2][j]
+                    else -> Sprites.RIGHT[j]
+                }
+                v.setImageViewResource(FRAMES[i][j], img)
+                place(v, FRAMES[i][j], x + offset, y, s, w, h)
+            }
+        }
+        v.setTextViewText(R.id.info, "🌱 ${f.grass.size}   🥚 ${f.eggs.size}/${Rules.NEST_MAX}   ❗ ${f.chickens.count { it.hungry }}")
+        v.setTextViewText(R.id.btn_collect, "Nhặt 🥚 ${f.eggs.size}")
         v.setTextViewText(R.id.btn_water, "Tưới 💧 ${f.water}")
         v.setOnClickPendingIntent(R.id.btn_collect, action(c, ACT_COLLECT))
         v.setOnClickPendingIntent(R.id.btn_water, action(c, ACT_WATER))
@@ -109,7 +148,7 @@ object Widgets {
         val v = RemoteViews(c.packageName, R.layout.widget_well)
         for (j in WELL.indices) {
             val img = when {
-                f.refillAt != 0L -> PUMP[j]        // đang bơm -> chạy hoạt ảnh
+                f.refillAt != 0L -> Sprites.PUMP[j]
                 f.water > 0 -> R.drawable.well_full
                 else -> R.drawable.well_empty
             }

@@ -27,18 +27,23 @@ def save(im, name, size):
 # Gà: mỗi khối 256px, ô 64px
 ch = Image.open(chicken_src).convert('RGBA')
 eat = frames(ch, 515, 258, 64, range(8, 16))
-walk = frames(ch, 258, 1, 64, range(0, 16, 2))
-idle = frames(ch, 515, 1, 64, [0])
-cut = common_square(eat + walk + idle)
+# 5 hướng đi: xuống, xuống-trái, trái, lên-trái, lên
+blocks = [(1, 1), (258, 1), (515, 1), (1, 258), (258, 258)]
+walks = [frames(ch, x, y, 64, range(0, 16, 2)) for x, y in blocks]
+cut = common_square(eat + [f for w in walks for f in w])
+walks = [cut[8 + d * 8: 16 + d * 8] for d in range(5)]
 for i in range(8):
     save(cut[i], f'chicken_eat{i}', 128)
-    h = cut[8 + i].resize((128, 128), Image.LANCZOS)
+    for d in range(5):
+        save(walks[d][i], f'walk{d}_{i}', 128)
+    save(walks[2][i].transpose(Image.FLIP_LEFT_RIGHT), f'walk_right{i}', 128)
+    h = walks[2][i].resize((128, 128), Image.LANCZOS)
     d = ImageDraw.Draw(h)   # dấu ! báo đói
     d.ellipse([96, 4, 124, 32], fill=(220, 40, 30, 255), outline=(255, 255, 255, 255), width=2)
     d.rectangle([108, 9, 112, 21], fill='white')
     d.rectangle([108, 24, 112, 28], fill='white')
     h.save(f'{OUT}/chicken_hungry{i}.png', optimize=True)
-save(cut[16], 'chicken_idle', 128)
+save(walks[2][0], 'chicken_idle', 128)
 
 # Giếng: mỗi khối 712px, ô 178px
 we = Image.open(well_src).convert('RGBA')
